@@ -34,7 +34,7 @@ class DatasetAFLW2000(BaseDataset):
         input_image = self.transform(image)
         image = self.image_loader(image)
         mask = self.image_loader(Image.open(osp.join(self.root, 'mask/', self.image_names[idx])))
-        m_i = utils.get_transform_matrix(self.m[idx])
+        m_i = utils.get_transform_matrix(torch.tensor(self.m[idx]))
 
         # Read processed obj file
         data = np.load(osp.join(self.root, 'process/', self.obj_names[idx].split('.')[0]+'.npz'))
