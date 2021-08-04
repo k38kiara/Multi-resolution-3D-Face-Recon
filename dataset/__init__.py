@@ -1,5 +1,5 @@
-from .dataset300WLP import Dataset300WLP
-from .datasetAFLW2000 import DatasetAFLW2000
+from ._300WLP import Dataset300WLP
+from .AFLW2000 import DatasetAFLW2000
 from . import utils
 import torch
 import os.path as osp
