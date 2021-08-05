@@ -43,27 +43,32 @@ class BatchWrapper:
         return dist, elev, azim
 
     @classmethod
-    def make_batch_light_direction(cls,
-                                   light_direction: Union[Tuple[float, float, float], torch.Tensor, List[float]],
-                                   device: Union[str, torch.device],
-                                   batch_num: int):
-        if light_direction is None:
-            light_direction = [0.0, 0.0, 10.0]
-        if isinstance(light_direction, torch.Tensor):
-            light_direction = light_direction.float()
-            if light_direction.ndim == 1:
-                light_direction = light_direction[None]
-        elif isinstance(light_direction, tuple):
-            light_direction = cls.convert_to_tensor(light_direction, device, add_one_dim=True)
-        elif isinstance(light_direction, list):
-            add_one_dim = not isinstance(light_direction[0], list)
-            light_direction = cls.convert_to_tensor(light_direction, device, add_one_dim=add_one_dim)
-        else:
-            raise TypeError('Cannot handle this type of lighting parameter -> "%s"' % type(light_direction))
+    def make_batch_color(cls,
+                         light_direction: Union[torch.Tensor, List[float], Tuple[float, float, float]],
+                         ambient_color: Union[torch.Tensor, List[float], Tuple[float, float, float]],
+                         diffuse_color: Union[torch.Tensor, List[float], Tuple[float, float, float]],
+                         specular_color: Union[torch.Tensor, List[float], Tuple[float, float, float]],
+                         device: Union[str, torch.device],
+                         batch_num: int):
+        def make_batch(data, device):
+            if isinstance(data, (list, tuple)):
+                add_one_dim = not isinstance(data[0], (list, tuple))
+                data = cls.convert_to_tensor(data, device, add_one_dim=add_one_dim)
 
-        light_direction = cls.align_batch_data(light_direction, batch_num)
+            elif isinstance(data, torch.Tensor):
+                data = data.float()
+                if data.ndim == 1:
+                    data = data[None]
+            else:
+                raise TypeError('Cannot handle this type of lighting parameter -> "%s"' % type(data))
+            return data
 
-        return light_direction
+        light_direction = cls.align_batch_data(make_batch(light_direction, device), batch_num)
+        ambient_color = cls.align_batch_data(make_batch(ambient_color, device), batch_num)
+        diffuse_color = cls.align_batch_data(make_batch(diffuse_color, device), batch_num)
+        specular_color = cls.align_batch_data(make_batch(specular_color, device), batch_num)
+
+        return light_direction, ambient_color, diffuse_color, specular_color
 
     @classmethod
     def make_batch_mesh(cls, vertices: torch.Tensor, faces: torch.Tensor, colors: torch.Tensor):
