@@ -27,20 +27,25 @@ class Loss(nn.Module):
         hsv_gt_images = HsvConverter.rgb_to_hsv(gt_images.permute(0, 3, 1, 2)).permute(0, 2, 3, 1)
         return NormLoss.norm(hsv_images, hsv_gt_images, masks=masks, loss_type=loss_type)
 
-    def forward(self, 
+    @classmethod
+    def get_model_loss(cls, 
                 output: Dict[str, torch.Tensor], 
                 target: Dict[str, torch.Tensor]
                 ) -> Dict[str, torch.Tensor]:
         
-        chamfer_dist = self.get_chamfer_dist(output['vertices'], target['vertices'])
-        pixel_loss = self.get_pixel_loss(output['images'], target['images'], target['masks'])
-        pixel_hsv_loss = self.get_pixel_hsv(output['images'], target['images'], target['masks'])
-        symmetric_loss = self.get_symmetric_loss(output['images'])
+        chamfer_dist = cls.get_chamfer_dist(output['vertices_3'], target['vertices'])
+        if 'vertices_2' in output and 'vertices_1' in output
+            chamfer_dist = chamfer_dist + cls.get_chamfer_dist(output['vertices_2'], target['vertices']) 
+            chamfer_dist = chamfer_dist + cls.get_chamfer_dist(output['vertices_1'], target['vertices'])
 
-        total_loss = self.weight['chamfer_dist'] * chamfer_dist \
-                    + self.weight['pixel'] * pixel_loss \
-                    + self.weight['pixel_hsv'] * pixel_hsv_loss \
-                    + self.weight['symmetric'] * symmetric_loss
+        pixel_loss = cls.get_pixel_loss(output['images'], target['images'], target['masks'])
+        pixel_hsv_loss = cls.get_pixel_hsv(output['images'], target['images'], target['masks'])
+        symmetric_loss = cls.get_symmetric_loss(output['images'])
+
+        total_loss = cls.weight['chamfer_dist'] * chamfer_dist \
+                    + cls.weight['pixel'] * pixel_loss \
+                    + cls.weight['pixel_hsv'] * pixel_hsv_loss \
+                    + cls.weight['symmetric'] * symmetric_loss
 
         return total_loss, {
                 'chamfer_dist': chamfer_dist,
