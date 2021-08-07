@@ -40,17 +40,17 @@ class Evaluator:
                                                                         data['m'].float().cuda())
 
             batch_size = x3_shape.shape[0]
-            pred_vertices3 = x3_shape + mean_vertices[2].repeat(batch_size, 1, 1)
-            pred_vertices2 = x2_shape + mean_vertices[1].repeat(batch_size, 1, 1)
-            pred_vertices1 = x1_shape + mean_vertices[0].repeat(batch_size, 1, 1)
+            vertices_3 = x3_shape + mean_vertices[2].repeat(batch_size, 1, 1)
+            vertices_2 = x2_shape + mean_vertices[1].repeat(batch_size, 1, 1)
+            vertices_1 = x1_shape + mean_vertices[0].repeat(batch_size, 1, 1)
 
-            output_images = Renderer.render_rgb(vertices=transform_vertices_coord(pred_vertices3, data),
-                            faces=faces,
-                            colors=colors,
+            output_images = Renderer.render_rgb(vertices=transform_vertices_coord(vertices3, data),
+                            faces=mean_vertices[2],
+                            colors=(x3_color + 1) / 2, # color from [-1, 1] to [0, 1]
                             light_direction=spheric2cartesian(pred_light),
                             )
             
-            total_loss, losses = Loss.get_model_loss(output={'vertices': pred_vertices3, 'images': output_images},
+            total_loss, losses = Loss.get_model_loss(output={'vertices_3': vertices_3, 'vertices_2': vertices_2, 'vertices_1': vertices_1, 'images': output_images},
                                                     target={'vertices': data['vertices'], 'images': data['image'], 'masks': data['mask']})
 
         return total_loss, losses
