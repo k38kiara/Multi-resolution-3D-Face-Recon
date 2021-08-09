@@ -66,12 +66,12 @@ class Dataset(torch.utils.data.Dataset):
         mean_faces, mean_vertices, mean_edges = [], [], []
         
         for i in ['505', '1961', '7726']:
-            vertices, faces = utils.get_obj_from_file(osp.join(meanface_path, 'meanface_{}.obj'.format(i)))
+            vertices, faces = utils.get_obj_from_file(osp.join(meanface_path, 'meanface_{}.obj'.format(i)), is_color=False)
             vertices, _, _ = utils.get_normalized_vertices(vertices)
             edges = utils.get_edges(vertices, faces)
-            mean_faces.append(faces)
-            mean_vertices.append(vertices)
-            mean_edges.append(edges)
+            mean_faces.append(faces.cuda())
+            mean_vertices.append(vertices.cuda())
+            mean_edges.append(edges.cuda())
 
         return mean_faces, mean_vertices, mean_edges
 
