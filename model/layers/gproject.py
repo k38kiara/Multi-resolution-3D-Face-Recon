@@ -5,6 +5,7 @@ import torch.nn.functional as F
 class GProject(nn.Module):
     def __init__(self):
         super().__init__()
+
     def forward(self, vertices, img_feats, data, is_inverse=False):
         '''
         img_feat: [batch, cnum, h, w]

@@ -3,6 +3,7 @@ import torch.nn as nn
 from torchvision.models import resnet18
 
 
+
 class ResNet18(nn.Module):
     def __init__(self, sample_vnum, output_dim):
         self.output_dim = output_dim

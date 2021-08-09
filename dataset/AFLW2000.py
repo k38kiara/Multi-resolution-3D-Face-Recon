@@ -30,7 +30,8 @@ class DatasetAFLW2000(BaseDataset):
 
     def __getitem__(self, idx):
         # Porcess image / mask
-        image = self.image_loader(Image.open(osp.join(self.root, 'image/', self.image_names[idx])))
+
+        image = Image.open(osp.join(self.root, 'image/', self.image_names[idx]))
         input_image = self.transform(image)
         image = self.image_loader(image)
         mask = self.image_loader(Image.open(osp.join(self.root, 'mask/', self.image_names[idx])))
@@ -40,9 +41,11 @@ class DatasetAFLW2000(BaseDataset):
         data = np.load(osp.join(self.root, 'process/', self.obj_names[idx].split('.')[0]+'.npz'))
         vertices = torch.tensor(data['vertices'])
         scale = torch.tensor(data['scale'])
-        shift = torch.tensor(data['shift'])
+
+        shift = torch.tensor(data['shift'])[None]
 
         return {
+                'data_name': self.image_names[idx].split('.')[0],
                 'image':image, 
                 'input_image':input_image, 
                 'mask':mask, 
