@@ -3,7 +3,6 @@ from torchvision import transforms
 import numpy as np
 import torch
 
-
 class BaseDataset(Dataset):
     def __init__(self):
         # self.image_loader = transforms.Compose([
