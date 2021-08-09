@@ -27,6 +27,7 @@ class ResNet18(nn.Module):
         local_features = []
 
         x = self._model.layer1(x)
+
         local_features.append(x)
 
         x = self._model.layer2(x)
@@ -36,6 +37,7 @@ class ResNet18(nn.Module):
         local_features.append(x)
 
         x = self._model.layer4(x)
+
         local_features.append(x)
 
         g_features = self._model.avgpool(x) # 512
