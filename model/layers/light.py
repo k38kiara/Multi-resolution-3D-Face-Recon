@@ -18,10 +18,10 @@ class LightDecoder(nn.Module):
         # x = self.linear(x)
 
 
-        pred_rgb = self.linear_rgb(x) #(512, 9)
-        pred_rgb = self.sigmoid(pred_rgb)
+        #pred_rgb = self.linear_rgb(x) #(512, 9)
+        #pred_rgb = self.sigmoid(pred_rgb)
         pred_dir = self.linear_dir(x) #(512, 3)
         pred_dir = self.sigmoid(pred_dir)
 
-
-        return torch.cat((pred_rgb, pred_dir), -1) #(b, 9)
+        return pred_dir
+        #return torch.cat((pred_rgb, pred_dir), -1) #(b, 11)

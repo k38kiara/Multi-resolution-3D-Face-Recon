@@ -16,8 +16,10 @@ class GProject(nn.Module):
         sample_point = vertices.detach()
         sample_point_inverse = sample_point.clone() * torch.tensor([-1, 1, 1]).cuda()
 
-        sample_point = transform_vertices(sample_point, data)[..., 0:2].unsqueeze(1)
-        sample_point_inverse = transform_vertices(sample_point_inverse, data)[..., 0:2].unsqueeze(1)
+
+        sample_point = self.transform_vertices(sample_point, data)[..., 0:2].unsqueeze(1)
+        sample_point_inverse = self.transform_vertices(sample_point_inverse, data)[..., 0:2].unsqueeze(1)
+
 
         # sample_point[..., 1] = sample_point[..., 1] * -1
         # sample_point = sample_point[..., [1, 0]]
@@ -33,7 +35,9 @@ class GProject(nn.Module):
 
         return output
 
-    def transform_vertices(vertices, data):
+
+    def transform_vertices(self, vertices, data):
+
 
         b, vn, c = vertices.shape
 
