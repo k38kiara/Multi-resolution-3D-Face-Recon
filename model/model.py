@@ -15,7 +15,7 @@ class Model(nn.Module):
 
         n_dim = 3
         self.fnum = GLOBAL_DIM + LOCAL_DIM + LOCAL_DIM
-        self.encoder = ResNet18()
+        self.encoder = ResNet18(sample_vnum=MEANFACE_VERTEX_NUM[0], output_dim=GLOBAL_DIM)
         self.gcns = nn.ModuleList([
             GBottleneck(in_dim=n_dim + GLOBAL_DIM + LOCAL_DIM, hidden_dim=128, out_dim=n_dim),
             GBottleneck(in_dim=n_dim + GLOBAL_DIM + LOCAL_DIM, hidden_dim=128, out_dim=n_dim),
@@ -33,7 +33,7 @@ class Model(nn.Module):
         self.local_pool = torch.nn.AdaptiveMaxPool1d(LOCAL_DIM)
         self.light_decoder = LightDecoder()
     
-    def forward(self, mean_vertices, edges, img, rotation):
+    def forward(self, mean_vertices, edges, img, data):
         
         batch_size = img.size(0)
         global_features, local_features, HFlocal_features, encode_feat = self.encoder(img)
@@ -41,20 +41,20 @@ class Model(nn.Module):
         # Shape
         # GCN Block 1
         zeros_padding = torch.zeros(batch_size, mean_vertices[0].shape[0], mean_vertices[0].shape[1]).cuda()
-        local_feature = self.project(mean_vertices[0], local_features, zeros_padding, rotation, is_inverse=True) # [batch, h, vnum, fnum]
+        local_feature = self.project(mean_vertices[0]+zeros_padding, local_features, data, is_inverse=True) # [batch, h, vnum, fnum]
         local_feature = self.local_pool(local_feature)
         x = torch.cat((mean_vertices[0].repeat(batch_size, 1, 1), local_feature, global_features), 2) # [batch, vnum, fnum]
         x1, x_hidden = self.gcns[0](x, edges[0]) # [batch, vnum, 3], [batch, vnum, 128]
         
         # GCN Block 2
-        local_feature = self.project(mean_vertices[0], local_features, x1, rotation, is_inverse=True)
+        local_feature = self.project(mean_vertices[0]+x1, local_features, data, is_inverse=True)
         local_feature = self.local_pool(local_feature)
 
         x = self.unpooling(torch.cat((x1, local_feature, global_features), 2), unpool_id=0)
         x2, x_hidden = self.gcns[1](x, edges[1])
         
         # GCN Block 3
-        local_feature = self.project(mean_vertices[1], local_features, x2, rotation, is_inverse=True)
+        local_feature = self.project(mean_vertices[1]+x2, local_features, data, is_inverse=True)
         local_feature = self.local_pool(local_feature)
         global_features = self.unpooling(global_features, unpool_id=0)
         x = self.unpooling(torch.cat((x2, local_feature, global_features), 2), unpool_id=1)
@@ -65,7 +65,7 @@ class Model(nn.Module):
         pred_vertex_pos = x3 + mean_vertices[2]
         pred_vertex_pos = torch.clamp(pred_vertex_pos, 0, 1)
 
-        local_feature = self.project(mean_vertices[2], local_features, x3, rotation, is_inverse=True)
+        local_feature = self.project(mean_vertices[2]+x3, local_features, data, is_inverse=True)
         local_feature = self.local_pool(local_feature)
         global_features = self.unpooling(global_features, unpool_id=1)
 
