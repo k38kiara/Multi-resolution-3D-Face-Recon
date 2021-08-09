@@ -41,9 +41,10 @@ class Dataset300WLP(BaseDataset):
         data = np.load(osp.join(self.root, 'process/', self.obj_names[idx].split('.')[0]+'.npz'))
         vertices = torch.tensor(data['vertices'])
         scale = torch.tensor(data['scale'])
-        shift = torch.tensor(data['shift'])
+        shift = torch.tensor(data['shift'])[None]
 
         return {
+                'data_name': self.image_names[idx].split('.')[0],
                 'image':image, 
                 'input_image':input_image, 
                 'mask':mask, 

@@ -33,6 +33,7 @@ class Loss(nn.Module):
                 ) -> Dict[str, torch.Tensor]:
         
         chamfer_dist = self.get_chamfer_dist(output['vertices_3'], target['vertices'])
+
         if 'vertices_2' in output and 'vertices_1' in output:
             chamfer_dist = chamfer_dist + self.get_chamfer_dist(output['vertices_2'], target['vertices']) 
             chamfer_dist = chamfer_dist + self.get_chamfer_dist(output['vertices_1'], target['vertices'])
