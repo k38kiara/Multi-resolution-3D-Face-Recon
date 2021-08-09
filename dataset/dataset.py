@@ -23,6 +23,31 @@ class Dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.dataset)
+
+    @staticmethod
+    def collate_func(batch_data):
+        collate_data = {'data_name':[],
+                        'image': [],
+                        'input_image': [],
+                        'mask': [],
+                        'm': [],
+                        'vertices': [],
+                        'scale': [],
+                        'shift': []}
+        
+        for i in range(len(batch_data)):
+            for key in list(collate_data.keys()):
+
+                if key in ['vertices']:
+                    collate_data[key].append(batch_data[i][key].float())
+
+                elif key in ['data_name']:
+                    collate_data[key].append(batch_data[i][key])
+                else:
+                    collate_data[key].append(batch_data[i][key][None].float())
+        for key in ['input_image', 'image', 'mask', 'm', 'shift', 'scale']:
+            collate_data[key] = torch.cat(collate_data[key])
+        return collate_data
     
     @staticmethod
     def preprocess_obj(obj_path, process_path):
