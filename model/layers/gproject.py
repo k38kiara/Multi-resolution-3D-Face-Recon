@@ -5,24 +5,23 @@ import torch.nn.functional as F
 class GProject(nn.Module):
     def __init__(self):
         super().__init__()
-    def forward(self, vertices, img_feats, deform, rotation, is_inverse=False):
+    def forward(self, vertices, img_feats, data, is_inverse=False):
         '''
         img_feat: [batch, cnum, h, w]
         inputs: [batch, h, vnum, 2], in range[-1, 1]
         output: [batch, vnum, feat_dim(cnum)]
         '''
         output = []
-        sample_point = vertices + deform
-        sample_point = sample_point.detach()
+        sample_point = vertices.detach()
         sample_point_inverse = sample_point.clone() * torch.tensor([-1, 1, 1]).cuda()
 
-        sample_point = torch.matmul(sample_point, torch.transpose(rotation, 1, 2))[..., 0:2].unsqueeze(1)
-        sample_point_inverse = torch.matmul(sample_point_inverse, torch.transpose(rotation, 1, 2))[..., 0:2].unsqueeze(1)
+        sample_point = transform_vertices(sample_point, data)[..., 0:2].unsqueeze(1)
+        sample_point_inverse = transform_vertices(sample_point_inverse, data)[..., 0:2].unsqueeze(1)
 
-        sample_point[..., 1] = sample_point[..., 1] * -1
-        sample_point = sample_point[..., [1, 0]]
-        sample_point_inverse[..., 1] = sample_point_inverse[..., 1] * -1
-        sample_point_inverse = sample_point_inverse[..., [1, 0]]
+        # sample_point[..., 1] = sample_point[..., 1] * -1
+        # sample_point = sample_point[..., [1, 0]]
+        # sample_point_inverse[..., 1] = sample_point_inverse[..., 1] * -1
+        # sample_point_inverse = sample_point_inverse[..., [1, 0]]
         
         for feat in img_feats:
             sample_feature = F.grid_sample(feat, sample_point)
@@ -32,3 +31,16 @@ class GProject(nn.Module):
         output = torch.cat(output, 2)
 
         return output
+
+    def transform_vertices(vertices, data):
+
+        b, vn, c = vertices.shape
+
+        vertices = torch.mul(vertices, data['scale'][:, None, None].cuda())
+        vertices = vertices +  data['shift'].cuda()
+        
+        vertices = torch.cat((vertices, torch.ones((b, vn, 1)).cuda()), -1)
+        vertices = torch.matmul(vertices, torch.transpose(data['m'].cuda(), 1, 2))
+        vertices[..., 0:2] = (vertices[..., 0:2] - 128) / 128
+
+        return vertices
