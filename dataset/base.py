@@ -1,12 +1,12 @@
 from torch.utils.data import Dataset
 from torchvision import transforms
 import numpy as np
-
+import torch
 
 class BaseDataset(Dataset):
     def __init__(self):
-        self.image_loader = transforms.Compose([
-                            transforms.ToTensor()])
+        # self.image_loader = transforms.Compose([
+        #                     transforms.ToTensor()])
         
         self.transform = transforms.Compose([
                         transforms.CenterCrop(224),
@@ -17,3 +17,6 @@ class BaseDataset(Dataset):
         self.m = np.empty([0,8])
         self.image_names = []
         self.obj_names = []
+
+    def image_loader(self, image):
+        return torch.tensor(np.array(image))
