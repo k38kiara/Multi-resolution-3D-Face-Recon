@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import pickle
 
 class GUnpooling(nn.Module):
     """Graph Pooling layer, aims to add additional vertices to the graph.
@@ -7,12 +8,13 @@ class GUnpooling(nn.Module):
     the average of the two edge vertices.
     Three middle points are connected in each triangle.
     """
-    def __init__(self):
+    def __init__(self, unpool_id, unpool_data_root='/data/hank/Face/meandata/'):
         super().__init__()
+        self.unpool_data_path = unpool_data_root + 'unpool_idx_{}.dat'.format(unpool_id)
 
-    def forward(self, inputs, unpool_data_path):
+    def forward(self, inputs):
         # input: [batch, vnum, fnum]
-        with open (unpool_data_path, 'rb') as fp:
+        with open (self.unpool_data_path, 'rb') as fp:
             unpool_idx = pickle.load(fp)
         unpool_idx = torch.tensor(unpool_idx, dtype=torch.long)
 

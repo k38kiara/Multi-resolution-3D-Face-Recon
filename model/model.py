@@ -28,7 +28,10 @@ class Model(nn.Module):
             GCNConv(64, 3)
         ])
         
-        self.unpooling = GUnpooling()
+        self.unpooling = nn.ModuleList([GUnpooling(0),
+                                        GUnpooling(1)
+                                    ])
+
         self.project = GProject()
         self.local_pool = torch.nn.AdaptiveMaxPool1d(LOCAL_DIM)
         self.light_decoder = LightDecoder()
@@ -36,7 +39,7 @@ class Model(nn.Module):
     def forward(self, mean_vertices, edges, img, data):
         
         batch_size = img.size(0)
-        global_features, local_features, HFlocal_features, encode_feat = self.encoder(img)
+        global_features, local_features, encode_feat = self.encoder(img)
 
         # Shape
         # GCN Block 1
@@ -50,14 +53,14 @@ class Model(nn.Module):
         local_feature = self.project(mean_vertices[0]+x1, local_features, data, is_inverse=True)
         local_feature = self.local_pool(local_feature)
 
-        x = self.unpooling(torch.cat((x1, local_feature, global_features), 2), unpool_id=0)
+        x = self.unpooling[0](torch.cat((x1, local_feature, global_features), 2))
         x2, x_hidden = self.gcns[1](x, edges[1])
         
         # GCN Block 3
         local_feature = self.project(mean_vertices[1]+x2, local_features, data, is_inverse=True)
         local_feature = self.local_pool(local_feature)
-        global_features = self.unpooling(global_features, unpool_id=0)
-        x = self.unpooling(torch.cat((x2, local_feature, global_features), 2), unpool_id=1)
+        global_features = self.unpooling[0](global_features)
+        x = self.unpooling[1](torch.cat((x2, local_feature, global_features), 2))
         x3, x_hidden = self.gcns[2](x, edges[2])
         x3 = self.gcns[3](x3, edges[2])
 
@@ -67,7 +70,7 @@ class Model(nn.Module):
 
         local_feature = self.project(mean_vertices[2]+x3, local_features, data, is_inverse=True)
         local_feature = self.local_pool(local_feature)
-        global_features = self.unpooling(global_features, unpool_id=1)
+        global_features = self.unpooling[1](global_features)
 
 
         x = torch.cat((local_feature, global_features, pred_vertex_pos), 2)

@@ -27,19 +27,15 @@ class ResNet18(nn.Module):
         local_features = []
 
         x = self._model.layer1(x)
-        y = torch.sum(y[0], axis=2)
         local_features.append(x)
 
         x = self._model.layer2(x)
-        y = torch.sum(y[0], axis=2)
         local_features.append(x)
 
         x = self._model.layer3(x)
-        y = torch.sum(y[0], axis=2)
         local_features.append(x)
 
         x = self._model.layer4(x)
-        y = torch.sum(y[0], axis=2)
         local_features.append(x)
 
         g_features = self._model.avgpool(x) # 512
