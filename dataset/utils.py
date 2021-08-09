@@ -29,7 +29,7 @@ def get_normalized_vertices(vertices: torch.Tensor):
     return vertices, scale, shift
 
 def get_edges(vertices: torch.Tensor, faces: torch.Tensor):
-    mesh = Meshes(torch.tensor(vertices[:, :3][None]), torch.tensor(faces[None]).long())
+    mesh = Meshes(vertices[:, :3][None], faces[None]).long()
     edges = mesh.edges_packed()
     return torch.cat([edges, edges.flip([1])]).transpose(0, 1)
 
