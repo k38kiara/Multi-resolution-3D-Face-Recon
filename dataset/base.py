@@ -19,5 +19,5 @@ class BaseDataset(Dataset):
         self.obj_names = []
 
     def image_loader(self, image):
-        return torch.tensor((np.array(image) / 255.)
+        return torch.tensor(np.array(image) / 255.)
 
