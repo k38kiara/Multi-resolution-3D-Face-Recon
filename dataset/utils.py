@@ -3,7 +3,7 @@ import re
 import torch
 from pytorch3d.structures import Meshes
 
-def get_obj_from_file(file_path, reverse_face=False, is_color=True):
+def get_obj_from_file(file_path, reverse_face=False, is_color=False):
     with open(file_path, 'r') as f:
         raw_data = f.read()
     

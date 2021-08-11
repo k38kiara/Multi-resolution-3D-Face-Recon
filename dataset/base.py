@@ -21,3 +21,4 @@ class BaseDataset(Dataset):
     def image_loader(self, image):
         return torch.tensor(np.array(image) / 255.)
 
+
