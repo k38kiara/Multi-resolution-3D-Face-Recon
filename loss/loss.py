@@ -1,13 +1,14 @@
 import torch
 import torch.nn as nn
 from typing import Dict
-from .utils import HsvConverter, NormLoss
+from .utils import HsvConverter, NormLoss, PerceptualLoss
 from pytorch3d.loss.chamfer import chamfer_distance
 
 class Loss(nn.Module):
     def __init__(self, weight: Dict[str, float]):
         super().__init__()
         self.weight = weight
+        self.perceptual_model = PerceptualLoss().cuda()
 
     def get_chamfer_dist(self, output: torch.Tensor, target: torch.Tensor):
         return chamfer_distance(output, target)[0]
@@ -27,6 +28,9 @@ class Loss(nn.Module):
         hsv_gt_images = HsvConverter.rgb_to_hsv(gt_images.permute(0, 3, 1, 2)).permute(0, 2, 3, 1)
         return NormLoss.norm(hsv_images, hsv_gt_images, masks=masks, loss_type=loss_type)
 
+    def get_perceptual_loss(self, images: torch.Tensor, gt_images: torch.Tensor):
+        return self.perceptual_model(images, gt_images)
+    
     def get_model_loss(self, 
                 output: Dict[str, torch.Tensor], 
                 target: Dict[str, torch.Tensor]
@@ -37,19 +41,23 @@ class Loss(nn.Module):
         if 'vertices_2' in output and 'vertices_1' in output:
             chamfer_dist = chamfer_dist + self.get_chamfer_dist(output['vertices_2'], target['vertices']) 
             chamfer_dist = chamfer_dist + self.get_chamfer_dist(output['vertices_1'], target['vertices'])
+            chamfer_dist = chamfer_dist / 3
 
         pixel_loss = self.get_pixel_loss(output['images'], target['images'], target['masks'])
         pixel_hsv_loss = self.get_pixel_hsv(output['images'], target['images'], target['masks'])
         symmetric_loss = self.get_symmetric_loss(output['images'])
+        perceptual_loss = self.get_perceptual_loss(output['images'], target['images'])
 
         total_loss = self.weight['chamfer_dist'] * chamfer_dist \
                     + self.weight['pixel'] * pixel_loss \
                     + self.weight['pixel_hsv'] * pixel_hsv_loss \
-                    + self.weight['symmetric'] * symmetric_loss
+                    + self.weight['symmetric'] * symmetric_loss \
+                    + self.weight['perceptual'] * perceptual_loss
 
         return total_loss, {
                 'chamfer_dist': chamfer_dist,
                 'pixel': pixel_loss,
                 'pixel_hsv': pixel_hsv_loss,
                 'symmetric': symmetric_loss,
+                'perceptual': perceptual_loss,
                 }
