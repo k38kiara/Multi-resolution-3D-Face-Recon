@@ -74,6 +74,3 @@ class Dataset(torch.utils.data.Dataset):
             mean_edges.append(edges.cuda())
 
         return mean_faces, mean_vertices, mean_edges
-
-    # @staticmethod
-    # def 
