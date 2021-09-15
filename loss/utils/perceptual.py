@@ -28,7 +28,8 @@ class PerceptualLoss(nn.Module):
                 param.requires_grad = False
 
     def normalize(self, x):
-        out = x/2 + 0.5
+        #out = x/2 + 0.5
+        out = x
         out = (out - self.mean_rgb.view(1,3,1,1)) / self.std_rgb.view(1,3,1,1)
         return out
 

@@ -17,6 +17,7 @@ class DatasetAFLW2000(BaseDataset):
             with open(osp.join(self.root, 'filelist/', dataset + '_filelist.txt')) as f:
                 file_names = f.read().splitlines()
             
+            #file_names = ['AFLW2000/image00013.png', 'AFLW2000/image00055.png', 'AFLW2000/image00783.png', 'AFLW2000/image02016.png']
             file_names = [name.replace(' ', '') for name in file_names]
             self.image_names += file_names
             self.obj_names += [re.sub(r'png', 'obj', name) for name in file_names]
@@ -35,10 +36,11 @@ class DatasetAFLW2000(BaseDataset):
         input_image = self.transform(image)
         image = self.image_loader(image)
         mask = self.image_loader(Image.open(osp.join(self.root, 'mask/', self.image_names[idx])))
+        #canonical_image = self.image_loader(Image.open(osp.join(self.root, 'render_raw/', self.obj_names[idx].split('.')[0]+'.png')))
         m_i = utils.get_transform_matrix(torch.tensor(self.m[idx]))
 
         # Read processed obj file
-        data = np.load(osp.join(self.root, 'process/', self.obj_names[idx].split('.')[0]+'.npz'))
+        data = np.load(osp.join(self.root, 'process_raw/', self.obj_names[idx].split('.')[0]+'.npz'))
         vertices = torch.tensor(data['vertices'])
         scale = torch.tensor(data['scale'])
 
@@ -46,11 +48,11 @@ class DatasetAFLW2000(BaseDataset):
 
         return {
                 'data_name': self.image_names[idx].split('.')[0],
-                'image':image, 
-                'input_image':input_image, 
-                'mask':mask, 
-                'm':m_i, 
-                'vertices':vertices, 
-                'scale':scale, 
-                'shift':shift,
+                'image':image.cuda(), 
+                'input_image':input_image.cuda(),
+                'mask':mask.cuda(), 
+                'm':m_i.cuda(), 
+                'vertices':vertices.cuda(), 
+                'scale':scale.cuda(), 
+                'shift':shift.cuda(),
                 }

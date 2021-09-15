@@ -16,7 +16,7 @@ class NormLoss:
         if loss_type == 'l1':
             loss = torch.mean(torch.abs(diff))
         elif loss_type == 'l2':
-            loss = torch.mean(torch.sqrt(diff ** 2))
+            loss = torch.sqrt(torch.mean(diff ** 2))
         elif loss_type == 'l21':
             loss = torch.sqrt(torch.sum(diff**2 + 1e-16, axis = -1))
             loss = torch.sum(loss)

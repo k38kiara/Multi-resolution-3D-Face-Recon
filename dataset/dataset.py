@@ -1,5 +1,6 @@
 from ._300WLP import Dataset300WLP
 from .AFLW2000 import DatasetAFLW2000
+from .customer_data import DatasetCustomer
 from . import utils
 import torch
 import os.path as osp
@@ -8,15 +9,18 @@ from pytorch3d.structures import Meshes
 from tqdm import tqdm
 import os
 from . import utils
+import config
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, mode, root_path='/data/hank/Face/'):
+    def __init__(self, mode, root_path=config.DATASET_ROOT):
         self.dataset = None
         if mode == '300W-LP':
             self.dataset = Dataset300WLP(root_path)
         elif mode == 'AFLW2000':
             self.dataset =  DatasetAFLW2000(root_path)
+        elif mode == 'customer':
+            self.dataset = DatasetCustomer(root_path)
 
     def __getitem__(self, idx):
         return self.dataset[idx]
@@ -36,7 +40,7 @@ class Dataset(torch.utils.data.Dataset):
                         'shift': []}
         
         for i in range(len(batch_data)):
-            for key in list(collate_data.keys()):
+            for key in list(batch_data[i].keys()):
 
                 if key in ['vertices']:
                     collate_data[key].append(batch_data[i][key].float())
@@ -65,12 +69,12 @@ class Dataset(torch.utils.data.Dataset):
     def load_mean_face(meanface_path):
         mean_faces, mean_vertices, mean_edges = [], [], []
         
-        for i in ['505', '1961', '7726']:
+        for i in ['505', '1961', '7726', '30668']:
             vertices, faces = utils.get_obj_from_file(osp.join(meanface_path, 'meanface_{}.obj'.format(i)), is_color=False)
             vertices, _, _ = utils.get_normalized_vertices(vertices)
             edges = utils.get_edges(vertices, faces)
             mean_faces.append(faces.cuda())
-            mean_vertices.append(vertices.cuda())
+            mean_vertices.append(vertices.float().cuda())
             mean_edges.append(edges.cuda())
-
-        return mean_faces, mean_vertices, mean_edges
+        _, gt_faces = utils.get_obj_from_file(osp.join(meanface_path, 'meanface_53215.obj'), is_color=False)
+        return mean_faces, mean_vertices, mean_edges, gt_faces
