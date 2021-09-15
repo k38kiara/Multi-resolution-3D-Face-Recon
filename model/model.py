@@ -10,24 +10,16 @@ GCN_OUTPUT_FEATURE = 128
 MEANFACE_VERTEX_NUM = [505, 1961, 7726]
 
 class Model(nn.Module):
-    def __init__(self):
+    def __init__(self, mesh_number):
         super(Model, self).__init__()
 
         n_dim = 3
+        self.K = mesh_number
         self.fnum = GLOBAL_DIM + LOCAL_DIM + LOCAL_DIM
         self.encoder = ResNet18(sample_vnum=MEANFACE_VERTEX_NUM[0], output_dim=GLOBAL_DIM)
-        self.gcns = nn.ModuleList([
-            GBottleneck(in_dim=n_dim + GLOBAL_DIM + LOCAL_DIM, hidden_dim=128, out_dim=n_dim),
-            GBottleneck(in_dim=n_dim + GLOBAL_DIM + LOCAL_DIM, hidden_dim=128, out_dim=n_dim),
-            GBottleneck(in_dim=n_dim + GLOBAL_DIM + LOCAL_DIM, hidden_dim=128, out_dim=64),
-            GCNConv(64, 3)
-        ])
-        
-        self.gcns_color = nn.ModuleList([
-            GBottleneck(in_dim=3 + GLOBAL_DIM + LOCAL_DIM, hidden_dim=256, out_dim=64),
-            GCNConv(64, 3)
-        ])
-        
+        self.gcns = GBottleneck(in_dim=n_dim + GLOBAL_DIM + LOCAL_DIM, hidden_dim=64, out_dim=32)
+
+        self.gcns_color = GBottleneck(in_dim=3 + GLOBAL_DIM + LOCAL_DIM, hidden_dim=64, out_dim=32)
 
         self.unpooling = nn.ModuleList([GUnpooling(0),
                                         GUnpooling(1)
@@ -45,43 +37,28 @@ class Model(nn.Module):
         # Shape
         # GCN Block 1
         zeros_padding = torch.zeros(batch_size, mean_vertices[0].shape[0], mean_vertices[0].shape[1]).cuda()
-        local_feature = self.project(mean_vertices[0]+zeros_padding, local_features, data, is_inverse=True) # [batch, h, vnum, fnum]
-        local_feature = self.local_pool(local_feature)
-        x = torch.cat((mean_vertices[0].repeat(batch_size, 1, 1), local_feature, global_features), 2) # [batch, vnum, fnum]
-        x1, x_hidden = self.gcns[0](x, edges[0]) # [batch, vnum, 3], [batch, vnum, 128]
+        x = []
+        s = mean_vertices[0] + zeros_padding
         
-        # GCN Block 2
-        local_feature = self.project(mean_vertices[0]+x1, local_features, data, is_inverse=True)
-        local_feature = self.local_pool(local_feature)
+        for k in range(self.K):
+            local_feature = self.project(s, local_features, data, is_inverse=True)
+            local_feature = self.local_pool(local_feature)
+            x_input = torch.cat((s, local_feature, global_features), 2)
+            x_output = self.gcns(x_input, edges[k])
+            s = s + x_output
+            x.append(s)
+            
+            if k < self.K - 1:
+                s = self.unpooling[k](s)
+                global_features = self.unpooling[k](global_features)
 
-        x = self.unpooling[0](torch.cat((x1, local_feature, global_features), 2))
-        x2, x_hidden = self.gcns[1](x, edges[1])
-        
-        # GCN Block 3
-        local_feature = self.project(mean_vertices[1]+x2, local_features, data, is_inverse=True)
-        local_feature = self.local_pool(local_feature)
-
-        global_features = self.unpooling[0](global_features)
-        x = self.unpooling[1](torch.cat((x2, local_feature, global_features), 2))
-        x3, x_hidden = self.gcns[2](x, edges[2])
-        x3 = self.gcns[3](x3, edges[2])
-
-        # Texture GCN
-        pred_vertex_pos = x3 + mean_vertices[2]
-        pred_vertex_pos = torch.clamp(pred_vertex_pos, 0, 1)
-
-        local_feature = self.project(mean_vertices[2]+x3, local_features, data, is_inverse=True)
-        local_feature = self.local_pool(local_feature)
-
-        global_features = self.unpooling[1](global_features)
-
-
-
-        x = torch.cat((local_feature, global_features, pred_vertex_pos), 2)
-        x3_color, _ = self.gcns_color[0](x, edges[2])
-        x3_color = self.gcns_color[1](x3_color, edges[2])
+            elif k == self.K - 1:
+                local_feature = self.project(s, local_features, data, is_inverse=True)
+                local_feature = self.local_pool(local_feature)
+                x_input = torch.cat((s, local_feature, global_features), 2)
+                x3_color = self.gcns_color(x_input, edges[k])
 
         # Light Decoder
         pred_light = self.light_decoder(encode_feat)
 
-        return x3, x2, x1, x3_color, pred_light
+        return x, x3_color, pred_light
