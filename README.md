@@ -1,1 +1,1 @@
-# Multi-resolution-3D-Face-Recon
+# Multi-resolution 3D Face Reconstruction from Single-view RGB Images
