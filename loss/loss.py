@@ -2,22 +2,26 @@ import torch
 import torch.nn as nn
 from typing import Dict
 from .utils import HsvConverter, NormLoss, PerceptualLoss
-from pytorch3d.loss.chamfer import chamfer_distance
+from pytorch3d.loss.chamfer import chamfer_distance as chamfer_distance
 from pytorch3d.loss.mesh_edge_loss import mesh_edge_loss
 from pytorch3d.structures.meshes import Meshes
+from kaolin.rep import TriangleMesh
+import numpy as np
+import re
 
 class Loss(nn.Module):
     def __init__(self):
         super().__init__()
         self.perceptual_model = PerceptualLoss().cuda()
+        self.bce_loss_func = nn.BCELoss()
 
     def get_edge_length_loss(self, vertices, faces):
         if len(faces.shape) < len(vertices.shape):
-            faces = faces.repeat(vertices.shape[0], 1, 1)
-        meshes = Meshes(verts=vertices, faces=faces)
+            p3d_faces = faces.repeat(vertices.shape[0], 1, 1)
+        meshes = Meshes(verts=vertices, faces=p3d_faces)
         return mesh_edge_loss(meshes)
 
-    def get_chamfer_dist(self, output: torch.Tensor, target: torch.Tensor):
+    def get_chamfer_dist(self, output: torch.Tensor, target: torch.Tensor, faces):
         return chamfer_distance(output, target)[0]
     
     def get_laplacian(self, output, target):
@@ -37,6 +41,13 @@ class Loss(nn.Module):
     def get_perceptual_loss(self, images: torch.Tensor, gt_images: torch.Tensor):
         return self.perceptual_model(images, gt_images)
     
+    def get_D_loss(self, input_result, is_real):
+        batch_size = input_result.shape[0]
+        if is_real:
+            return self.bce_loss_func(input_result, torch.zeros(batch_size, 1).cuda())
+        else:
+            return self.bce_loss_func(input_result, torch.ones(batch_size, 1).cuda())
+
     def get_model_loss(self, 
                 output: Dict[str, torch.Tensor], 
                 target: Dict[str, torch.Tensor]
@@ -44,7 +55,7 @@ class Loss(nn.Module):
 
         chamfer_dist, edge_length_loss = 0, 0
         for i in range(len(output['vertices'])):
-            chamfer_dist = chamfer_dist + self.get_chamfer_dist(output['vertices'][i], target['vertices']) 
+            chamfer_dist = chamfer_dist + self.get_chamfer_dist(output['vertices'][i], target['vertices'], output['faces'][i]) 
             edge_length_loss = edge_length_loss + self.get_edge_length_loss(output['vertices'][i], output['faces'][i])
 
         pixel_loss = self.get_pixel_loss(output['images'], target['images'], target['masks'])
