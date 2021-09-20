@@ -15,7 +15,7 @@ We use the 300W-LP and AFLW2000 dataset pre-processed by [Nonlinear-3DMM](https:
         ├── mask
         ├── obj
         ├── filelist
-        ├── meanface
+        ├── meandata
         └── process_obj
 
 
