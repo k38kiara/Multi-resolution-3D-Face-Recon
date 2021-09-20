@@ -1,5 +1,12 @@
 # Multi-resolution 3D Face Reconstruction from Single-view RGB Images
 
+## Environment
+* python 3.6
+* Pytorch 1.4.0
+* Kaolin 0.1.0
+* torch_geometric 1.6.0
+* Pytorch3D 0.5.0
+
 ## Dataset
 We use the 300W-LP and AFLW2000 dataset pre-processed by [Nonlinear-3DMM](https://github.com/tranluan/Nonlinear_Face_3DMM). The dataset format:
 
