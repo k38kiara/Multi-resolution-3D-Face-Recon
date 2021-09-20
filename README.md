@@ -3,13 +3,13 @@
 ## Dataset
 We use the 300W-LP and AFLW2000 dataset pre-processed by [Nonlinear-3DMM](https://github.com/tranluan/Nonlinear_Face_3DMM). The dataset format:
 
-data_path/
-    ├── image
-    ├── mask
-    ├── obj
-    ├── filelist
-    ├── meanface
-    └── process
+    data_path/
+        ├── image
+        ├── mask
+        ├── obj
+        ├── filelist
+        ├── meanface
+        └── process
 
 
 
