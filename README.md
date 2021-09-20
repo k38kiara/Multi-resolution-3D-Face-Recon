@@ -1,5 +1,8 @@
 # Multi-resolution 3D Face Reconstruction from Single-view RGB Images
 
+## Dataset
+We use the 300W-LP and AFLW2000 dataset pre-processed by [Nonlinear-3DMM](https://github.com/tranluan/Nonlinear_Face_3DMM).
+
 ## Usage
 ### Training
     CUDA_VISIBLE_DEVICES=0 python main.py -c save_ckpt_name
