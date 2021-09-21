@@ -43,7 +43,7 @@ class Refiner():
         #                }
         self.weight = {'chamfer_dist': 10, 
                        'laplacian_smooth': 1,
-                       'landmarks_loss': 1,
+                       'landmarks_loss': 0,
                        'pixel': 10, 
                        'symmetric': 0.1, 
                        'perceptual': 0.1,

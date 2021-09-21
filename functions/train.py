@@ -41,7 +41,7 @@ class Trainer():
         
         self.weight = {'chamfer_dist': 10, 
                        'laplacian_smooth': 1,
-                       'landmarks_loss': 1,
+                       'landmarks_loss': 0,
                        'pixel': 1, 
                        'symmetric': 0.1, 
                        'perceptual': 0.01,
