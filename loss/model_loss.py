@@ -20,9 +20,9 @@ class Model_Loss(nn.Module):
         self.perceptual_model = PerceptualLoss().cuda()
         self.bce_loss_func = nn.BCELoss()
         self.cd = ChamferDistanceLoss()
-        self.landmarks = [np.load('../landmark_505.npz')['landmark'],
-                          np.load('../landmark_1961.npz')['landmark'],
-                          np.load('../landmark_7726.npz')['landmark']]
+        # self.landmarks = [np.load('../landmark_505.npz')['landmark'],
+        #                   np.load('../landmark_1961.npz')['landmark'],
+        #                   np.load('../landmark_7726.npz')['landmark']]
 
     def get_landmark_loss(self, vertices, target_vertices, landmarks_idx):
         return NormLoss.norm(vertices[:, landmarks_idx[:, 1]], 
@@ -98,7 +98,7 @@ class Model_Loss(nn.Module):
             mean_mesh = TriangleMesh.from_tensors(vertices=target['mean_vertices'][i].float(), faces=output['faces'][i].long())
             mean_mesh.cuda()
             laplacian_smooth_loss = laplacian_smooth_loss + self.get_laplacian(output['vertices'][i], mean_mesh, output['faces'][i])
-            landmarks_loss = landmarks_loss + self.get_landmark_loss(output['vertices'][i], target['vertices'], self.landmarks[i])
+            #landmarks_loss = landmarks_loss + self.get_landmark_loss(output['vertices'][i], target['vertices'], self.landmarks[i])
 
         pixel_loss = self.get_pixel_loss(output['images'], target['images'], target['masks'])
         symmetric_loss = self.get_symmetric_loss(output['canonical_images'])
