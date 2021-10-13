@@ -40,7 +40,7 @@ class Dataset300WLP(BaseDataset):
         m_i = utils.get_transform_matrix(torch.tensor(self.m[idx]))
 
         # Read processed obj file
-        data = np.load(osp.join(self.root, 'process_raw/', self.obj_names[idx].split('.')[0]+'.npz'))
+        data = np.load(osp.join(self.root, 'process_obj/', self.obj_names[idx].split('.')[0]+'.npz'))
         vertices = torch.tensor(data['vertices'])
         scale = torch.tensor(data['scale'])
         shift = torch.tensor(data['shift'])[None]
